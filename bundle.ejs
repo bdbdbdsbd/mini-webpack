@@ -1,0 +1,30 @@
+(function(modules){
+    const require=(id)=>{
+        const [fn,mapping] = modules[id]
+        const module = {
+            exports:{}
+        }
+        function localRequire(filePath){
+            const id = mapping[filePath]
+            return require(id)
+        }
+
+        fn(localRequire,module,module.exports)//相当于在执行foojs、mainjs
+        return module.exports
+    }
+    
+    require(0)
+    
+    // require,module,exports 传进来的特性？
+    // exports 是输出
+})({
+    <% data.forEach((item)=>{%>
+        "<%-item["id"]%>":[function (require,module,exports){
+            <%- item["code"]%>
+        },<%- JSON.stringify(item["mapping"])  %> ],
+        <%}) %> 
+
+})
+// ()立即执行
+
+// 使用commonJS规范里面的require 代替import

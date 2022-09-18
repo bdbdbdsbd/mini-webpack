@@ -1,0 +1,23 @@
+{
+  "name": "webpacksource",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "webpack是将若干html/css/js等文件打包，建立依赖关系，这一般用的就是import之类的",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/parser": "^7.19.1",
+    "@babel/traverse": "^7.19.1",
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
+    "ejs": "^3.1.8"
+  }
+}
