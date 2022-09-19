@@ -37,6 +37,7 @@ function createAsset(filePath){
 }
 
 
+
 function createGraph(){
     const mainAsset = createAsset("./example/main.js")
     const queue = [mainAsset]
