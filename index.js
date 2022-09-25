@@ -5,15 +5,37 @@ import traverse from "@babel/traverse"
 import path from "path"
 import ejs from "ejs"
 import {transformFromAst} from "babel-core"
+import {jsonLoader} from "../webpackSource/jsonLoader.js"
 let id = 0
 // 获取文件内容
 // 获取依赖关系
+
+const webpackConfig = {
+    module:{
+        rules:[
+            {
+              test: /\.json$/,
+              use: jsonLoader,
+            },
+          ],
+    }
+
+}
+
 function createAsset(filePath){
     const deps = []
-    const source = fs.readFileSync(filePath,{
+    let source = fs.readFileSync(filePath,{
         encoding:"utf-8"
     });
     // console.log(source);
+
+    const loaders = webpackConfig.module.rules
+    loaders.forEach(({test,use})=>{
+        // regexObj.test(str)方法
+        if(test.test(filePath)){
+            source = use(source)
+        }
+    })
 
     // 得到ast树
     const ast = parser.parse(source,{
@@ -43,7 +65,7 @@ function createGraph(){
     const queue = [mainAsset]
     for(const asset of queue){
         asset.deps.forEach(ralativePath=>{
-            console.log("depsssss",path.resolve("./example",ralativePath),ralativePath)
+            // console.log("depsssss",path.resolve("./example",ralativePath),ralativePath)
             const child = createAsset(path.resolve("./example",ralativePath))
             asset.mapping[ralativePath] = child.id
             queue.push(child)
@@ -65,9 +87,7 @@ function build(graph){
             mapping,
         }
     })
-    console.log(data[1].code,"datacode",graph)
     const code1 = ejs.render(template,{data})
-    console.log(code1)
     fs.writeFileSync("./dist/bundle.js",code1)
 }
 
