@@ -6,6 +6,8 @@ import path from "path"
 import ejs from "ejs"
 import {transformFromAst} from "babel-core"
 import {jsonLoader} from "../webpackSource/jsonLoader.js"
+import {ChangeOutputPath} from "../webpackSource/ChangeOutputPath.js"
+import { SyncHook } from "tapable"
 let id = 0
 // 获取文件内容
 // 获取依赖关系
@@ -18,22 +20,44 @@ const webpackConfig = {
               use: jsonLoader,
             },
           ],
-    }
-
+    },
+    plugins:[new ChangeOutputPath()]
 }
 
+const hooks = {
+    emitFile: new SyncHook(["context"])
+}
+// 注册函数
+function initPlugins(){
+    const plugins = webpackConfig.plugins
+    plugins.forEach((plugin)=>{
+        plugin.apply(hooks)
+    })
+}
 function createAsset(filePath){
     const deps = []
     let source = fs.readFileSync(filePath,{
         encoding:"utf-8"
     });
-    // console.log(source);
-
     const loaders = webpackConfig.module.rules
+    const loaderContext = {
+        addDeps(dep){
+            console.log("dep",dep)
+        }
+    }
+
     loaders.forEach(({test,use})=>{
         // regexObj.test(str)方法
+        // 从后往前的调用loader
         if(test.test(filePath)){
-            source = use(source)
+            if(Array.isArray(use)){
+                use.reverse().forEach((fn)=>{
+                    source = fn.call(loaderContext,source)
+                })
+            }
+            else{
+                source = use.call(loaderContext,source)
+            } 
         }
     })
 
@@ -87,9 +111,19 @@ function build(graph){
             mapping,
         }
     })
+    // console.log(data[1].code,"datacode",graph)
     const code1 = ejs.render(template,{data})
-    fs.writeFileSync("./dist/bundle.js",code1)
+    // console.log(code1)
+    let outputPath = "./dist/bundle.js"
+    // 调用
+    const context = {
+        ChangeOutputPath(path){
+            outputPath = path
+        }
+    }
+    hooks.emitFile.call(context)
+    fs.writeFileSync(outputPath,code1)
 }
-
+initPlugins()
 const graph = createGraph()
 build(graph)
